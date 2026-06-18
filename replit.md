@@ -1,6 +1,8 @@
-# [Project name]
+# CELLIK TG B0T
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+_THIS BOT HELPS TO BUY THERE FAVOURITE TOOL WITH AUTOMATION PROCESS THIS ALSO MANAGES THE PAYMENTS 
+SO DON'T WORRY 
+#MADE BY @SNIPERx_03._
 
 ## Run & Operate
 
