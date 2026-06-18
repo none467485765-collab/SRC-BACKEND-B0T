@@ -1,8 +1,8 @@
-import { pgTable, serial, integer, text, boolean, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, serial, bigint, text, boolean, timestamp } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
   id:         serial("id").primaryKey(),
-  telegramId: integer("telegram_id").notNull().unique(),
+  telegramId: bigint("telegram_id", { mode: "number" }).notNull().unique(),
   username:   text("username"),
   firstName:  text("first_name").notNull(),
   isBanned:   boolean("is_banned").notNull().default(false),
@@ -11,7 +11,7 @@ export const usersTable = pgTable("users", {
 
 export const ordersTable = pgTable("orders", {
   id:            serial("id").primaryKey(),
-  telegramId:    integer("telegram_id").notNull().references(() => usersTable.telegramId),
+  telegramId:    bigint("telegram_id", { mode: "number" }).notNull().references(() => usersTable.telegramId),
   planId:        text("plan_id").notNull(),
   planName:      text("plan_name").notNull(),
   planPriceUsd:  text("plan_price_usd").notNull(),
@@ -28,6 +28,6 @@ export const scheduledBroadcastsTable = pgTable("scheduled_broadcasts", {
   message:     text("message").notNull(),
   scheduledAt: timestamp("scheduled_at").notNull(),
   status:      text("status").notNull().default("pending"),
-  createdBy:   integer("created_by").notNull(),
+  createdBy:   bigint("created_by", { mode: "number" }).notNull(),
   createdAt:   timestamp("created_at").notNull().defaultNow(),
 });
