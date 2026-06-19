@@ -1529,6 +1529,69 @@ export function registerAdminHandlers(bot: Telegraf) {
   }));
 
   // ════════════════════════════════
+  // BROADCAST COMMAND
+  // ════════════════════════════════
+
+  bot.command("broadcast", adminOnly(async (ctx) => {
+    const msg = ctx.message as Message.TextMessage;
+    const text = msg.text.replace(/^\/broadcast\s*/i, "").trim();
+
+    if (!text) {
+      await ctx.reply(
+        `${CE.speak} <b>Broadcast</b>\n\n` +
+          `<blockquote>${CE.wrench} <b>Usage:</b>\n<code>/broadcast Your message here</code>\n\n` +
+          `<i>Sends to all non-banned users.</i></blockquote>`,
+        { parse_mode: "HTML" },
+      );
+      return;
+    }
+
+    const users = await db.query.usersTable.findMany({
+      where: eq(usersTable.isBanned, false),
+    });
+
+    if (users.length === 0) {
+      await ctx.reply(`${CE.explosion} <b>No users to broadcast to.</b>`, { parse_mode: "HTML" });
+      return;
+    }
+
+    const statusMsg = await ctx.reply(
+      `${CE.lightning} <b>Broadcasting to ${users.length} users…</b>\n<blockquote><i>Please wait.</i></blockquote>`,
+      { parse_mode: "HTML" },
+    );
+
+    let sent = 0;
+    let failed = 0;
+
+    for (const user of users) {
+      try {
+        await bot.telegram.sendMessage(user.telegramId, text, { parse_mode: "HTML" });
+        sent++;
+      } catch {
+        failed++;
+      }
+      // Rate-limit: 30 messages/second max (Telegram limit)
+      await new Promise<void>((r) => setTimeout(r, 40));
+    }
+
+    logger.info({ sent, failed, adminId: ctx.from!.id }, "Broadcast complete");
+
+    try {
+      await bot.telegram.deleteMessage(ctx.chat.id, statusMsg.message_id);
+    } catch { /* already gone */ }
+
+    await ctx.reply(
+      `${CE.thumbsup} <b>Broadcast Complete</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `<blockquote>${CE.check} <b>Sent:</b> ${sent}\n` +
+        `${CE.explosion} <b>Failed:</b> ${failed}\n` +
+        `${CE.globe} <b>Total:</b> ${users.length}</blockquote>\n\n` +
+        `${CE.speak} <b>Message sent:</b>\n<blockquote>${htmlEscape(text.slice(0, 300))}${text.length > 300 ? "…" : ""}</blockquote>`,
+      { parse_mode: "HTML" },
+    );
+  }));
+
+  // ════════════════════════════════
   // ADMIN TERMINAL — fires on any plain text from an admin
   // ════════════════════════════════
 
