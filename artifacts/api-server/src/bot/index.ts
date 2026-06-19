@@ -148,7 +148,7 @@ export async function startBot(): Promise<Telegraf | null> {
     process.env.REPLIT_DEV_DOMAIN;
 
   if (domain) {
-    const webhookUrl = `${domain}/api/bot/webhook`;
+    const webhookUrl = `https://${domain}/api/bot/webhook`;
     startViaWebhook(bot, webhookUrl, secret).catch((err) => {
       logger.error({ err }, "Webhook startup failed unexpectedly");
     });
