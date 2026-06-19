@@ -117,7 +117,9 @@ export async function startBot(): Promise<Telegraf | null> {
     ),
   ).catch(() => { /* individual errors already logged above */ });
 
-  // Prefer webhook; fall back to polling if no domain is set
+  // Prefer webhook; fall back to polling only in non-production dev without a domain.
+  // In production (NODE_ENV=production) NEVER start polling — polling calls deleteWebhook
+  // which wipes any externally-registered webhook and breaks the bot.
   const domain =
     process.env.WEBHOOK_DOMAIN ??
     process.env.REPLIT_DEV_DOMAIN;
@@ -127,6 +129,10 @@ export async function startBot(): Promise<Telegraf | null> {
     startViaWebhook(bot, webhookUrl, secret).catch((err) => {
       logger.error({ err }, "Webhook startup failed unexpectedly");
     });
+  } else if (process.env.NODE_ENV === "production") {
+    // Production with no WEBHOOK_DOMAIN — run in passive webhook mode.
+    // The webhook must be registered externally (e.g. via Render env WEBHOOK_DOMAIN).
+    logger.warn("Running in production with no WEBHOOK_DOMAIN — passive webhook mode. Set WEBHOOK_DOMAIN to auto-register.");
   } else {
     startViaPolling(bot).catch((err) => {
       logger.error({ err }, "Polling startup failed unexpectedly");
